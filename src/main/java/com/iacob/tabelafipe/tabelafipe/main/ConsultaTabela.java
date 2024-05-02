@@ -1,13 +1,15 @@
 package com.iacob.tabelafipe.tabelafipe.main;
 
 import com.iacob.tabelafipe.tabelafipe.model.Dado;
-
 import com.iacob.tabelafipe.tabelafipe.model.Modelos;
 import com.iacob.tabelafipe.tabelafipe.model.Veiculo;
 import com.iacob.tabelafipe.tabelafipe.service.ApiDataFetcher;
 import com.iacob.tabelafipe.tabelafipe.service.DataMapper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
 
 public class ConsultaTabela {
     Scanner sc = new Scanner(System.in);
@@ -39,7 +41,7 @@ public class ConsultaTabela {
                 tipo = "caminhoes/marcas/";
                 break;
             default:
-                System.out.println("Opção inválida, tente novamente");
+                System.out.println("\nOpção inválida, tente novamente");
         }
 
         String jsonMarcas = apiDataFetcher.getData(URL_INICIO + tipo);
@@ -50,7 +52,7 @@ public class ConsultaTabela {
         )).forEach(t -> System.out.println("Marca: " + t.nome() +
                 " | Código: " + t.codigo()));
 
-        System.out.println("Escolha uma marca da lista acima e digite o código correspondente:");
+        System.out.println("\nEscolha uma marca da lista acima e digite o código correspondente:");
         sc.nextLine();
         marcaEscolhida = sc.nextLine();
 
@@ -60,38 +62,32 @@ public class ConsultaTabela {
         listaModelo.modelos().stream().forEach(t -> System.out.println("Modelo: " + t.nome() +
                 " | Código: " + t.codigo()));
 
-        System.out.println("Digite um pedaço do nome do carro para filtrar a lista:");
+        System.out.println("\nDigite um pedaço do nome do carro para filtrar a lista:");
 
         String busca = sc.nextLine();
+
+        System.out.println("\nModelos Filtrados: ");
         listaModelo.modelos().stream().filter(modelo -> modelo.nome().toLowerCase().contains(busca.toLowerCase()))
                 .forEach(t -> System.out.println("Modelo: " + t.nome() +
                 " | Código: " + t.codigo()));
 
-        System.out.println("Escolha um modelo específico e digite o código correspondente: ");
+        System.out.println("\nEscolha um modelo específico e digite o código correspondente: ");
         String codigoEspecifico = sc.nextLine();
         String jsonEspecifico =
                 apiDataFetcher.getData(URL_INICIO + tipo + marcaEscolhida + "/modelos/" + codigoEspecifico + "/anos");
         //System.out.println(jsonEspecifico);
         List<Dado> listaAnos = conversor.convertList(jsonEspecifico, Dado.class);
 //        System.out.println(listaAnos);
+        List<Veiculo> listaVeiculos = new ArrayList<>();
 
-        listaAnos.stream().forEach(t -> {
+        listaAnos.parallelStream().forEach(t -> {
             String jsonVeiculo =
                     apiDataFetcher.getData(URL_INICIO + tipo + marcaEscolhida + "/modelos/" + codigoEspecifico +
                             "/anos/" + t.codigo());
             Veiculo veiculo = conversor.convertData(jsonVeiculo, Veiculo.class);
-            System.out.println(veiculo.Marca() + " " + veiculo.Modelo() + " Ano: " + veiculo.AnoModelo() + " Valor: " + veiculo.Valor() + " Combustível: " + veiculo.Combustivel());
+            listaVeiculos.add(veiculo);
         });
-
-
-
-
-
-
-
-
-
+        listaVeiculos.stream().sorted(Comparator.comparing(Veiculo::anoModelo).reversed()).forEach(veiculo ->System.out.println(veiculo.marca() + " " + veiculo.modelo() + " Ano: " + veiculo.anoModelo() + " Valor: " + veiculo.valor() + " Combustível: " + veiculo.combustivel()));
 
     }
 }
-
